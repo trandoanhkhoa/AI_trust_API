@@ -29,9 +29,9 @@ public partial class AiTrustContext : DbContext
 
     public virtual DbSet<Useranswersurvey> Useranswersurveys { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
-        => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=AI_trust;Username=postgres;Password=120303;SSL Mode=Disable");
+    //    => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=AI_trust;Username=postgres;Password=120303;SSL Mode=Disable");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
