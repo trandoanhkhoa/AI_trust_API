@@ -1,24 +1,26 @@
-﻿using AI_trust.DTOs;
-using AI_trust.Models;
+﻿using AI_trust.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Connect DB Scaffold-DbContext "Server=DYLAN;Database=AI_trust;Trusted_Connection=True;TrustServerCertificate=True;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models -Force
+/* =========================
+ * BASIC SERVICES
+ * ========================= */
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-// Add HttpClient
 builder.Services.AddHttpClient();
 
-
+/* =========================
+ * LOAD ENV
+ * ========================= */
 builder.Configuration.AddEnvironmentVariables();
 
-var groqKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-var databaseUrl =  Environment.GetEnvironmentVariable("DATABASE_URL");
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
+/* =========================
+ * DATABASE (PostgreSQL Railway)
+ * ========================= */
 builder.Services.AddDbContext<AiTrustContext>(options =>
 {
     if (!string.IsNullOrWhiteSpace(databaseUrl))
@@ -26,55 +28,80 @@ builder.Services.AddDbContext<AiTrustContext>(options =>
         var uri = new Uri(databaseUrl);
         var userInfo = uri.UserInfo.Split(':', 2);
 
-        var npgsqlConnectionString =
+        var connectionString =
             $"Host={uri.Host};" +
             $"Port={uri.Port};" +
             $"Database={uri.AbsolutePath.TrimStart('/')};" +
             $"Username={userInfo[0]};" +
             $"Password={userInfo[1]};" +
-            $"SSL Mode=Require;" +
+            $"Ssl Mode=Require;" +
             $"Trust Server Certificate=true";
 
-        options.UseNpgsql(npgsqlConnectionString);
+        options.UseNpgsql(connectionString);
     }
     else
     {
+        // Local only
         options.UseNpgsql(
             builder.Configuration.GetConnectionString("PostgresConnection")
         );
     }
 });
 
-//options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-//"DefaultConnection": "Server=DYLAN;Database=AI_trust;Trusted_Connection=True;TrustServerCertificate=True;"
+/* =========================
+ * CORS
+ * ========================= */
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy =>
-        {
-            policy.WithOrigins("http://localhost:5173") // React app URL
-                  .AllowAnyHeader()
-                  .AllowAnyMethod()
-                  .AllowCredentials();
-
-        });
+    options.AddPolicy("AllowReactApp", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "https://aitrustapi-production.up.railway.app"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 });
-var app = builder.Build();
 
-
-//Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+/* =========================
+ * RAILWAY PORT (BẮT BUỘC)
+ * ========================= */
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 }
 
-app.UseHttpsRedirection();
+var app = builder.Build();
+
+/* =========================
+ * AUTO MIGRATE DB (SAFE)
+ * ========================= */
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AiTrustContext>();
+    db.Database.Migrate();
+}
+
+/* =========================
+ * MIDDLEWARE
+ * ========================= */
+app.UseCors("AllowReactApp");
+
+// Swagger bật cho Railway (debug)
+app.UseSwagger();
+app.UseSwaggerUI();
+
+// Railway đã HTTPS sẵn → KHÔNG redirect nữa
+if (!app.Environment.IsProduction())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
-
-
