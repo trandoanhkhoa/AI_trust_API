@@ -1,6 +1,7 @@
 ﻿using AI_trust.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
@@ -26,11 +27,17 @@ namespace AI_trust.Controllers
         {
             //string apiKey = _config["Groq:ApiKey"];
             string apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+            
             string endpoint = "https://api.groq.com/openai/v1/chat/completions";
             string question = db.Questions.SingleOrDefault(x => x.Id == request.idquestioncurrent)?.Question1;
-            
+
             var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", apiKey);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json")
+            );
 
             var payload = new
             {
@@ -73,10 +80,16 @@ namespace AI_trust.Controllers
         {
             //string apiKey = _config["Groq:ApiKey"];
             string apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+            
             string endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
             var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+            client.DefaultRequestHeaders.Clear();
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", apiKey);
+            client.DefaultRequestHeaders.Accept.Add(
+                new MediaTypeWithQualityHeaderValue("application/json")
+            );
 
             string finalPrompt;
 
