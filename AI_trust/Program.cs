@@ -15,9 +15,23 @@ builder.Services.AddHttpClient();
 
 
 builder.Configuration.AddEnvironmentVariables();
+
 var groqKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+var dbConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+
 builder.Services.AddDbContext<AiTrustContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("PostgresConnection")));
+{
+    if (!string.IsNullOrEmpty(dbConnectionString))
+    {
+        options.UseNpgsql(dbConnectionString);
+    }
+    else
+    {
+        options.UseNpgsql(
+            builder.Configuration.GetConnectionString("PostgresConnection")
+        );
+    }
+});
 //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 //"DefaultConnection": "Server=DYLAN;Database=AI_trust;Trusted_Connection=True;TrustServerCertificate=True;"
 builder.Services.AddCors(options =>
