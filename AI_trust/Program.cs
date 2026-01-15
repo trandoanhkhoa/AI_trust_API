@@ -17,13 +17,25 @@ builder.Services.AddHttpClient();
 builder.Configuration.AddEnvironmentVariables();
 
 var groqKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-var dbConnectionString = Environment.GetEnvironmentVariable("DATABASE_URL");
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 builder.Services.AddDbContext<AiTrustContext>(options =>
 {
-    if (!string.IsNullOrEmpty(dbConnectionString))
+    if (!string.IsNullOrWhiteSpace(databaseUrl))
     {
-        options.UseNpgsql(dbConnectionString);
+        var uri = new Uri(databaseUrl);
+        var userInfo = uri.UserInfo.Split(':', 2);
+
+        var npgsqlConnectionString =
+            $"Host={uri.Host};" +
+            $"Port={uri.Port};" +
+            $"Database={uri.AbsolutePath.TrimStart('/')};" +
+            $"Username={userInfo[0]};" +
+            $"Password={userInfo[1]};" +
+            $"SSL Mode=Require;" +
+            $"Trust Server Certificate=true";
+
+        options.UseNpgsql(npgsqlConnectionString);
     }
     else
     {
@@ -32,6 +44,7 @@ builder.Services.AddDbContext<AiTrustContext>(options =>
         );
     }
 });
+
 //options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 //"DefaultConnection": "Server=DYLAN;Database=AI_trust;Trusted_Connection=True;TrustServerCertificate=True;"
 builder.Services.AddCors(options =>
