@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AI_trust.Models;
 
+[Table("useranswers")]
 public partial class Useranswer
 {
     public int Id { get; set; }
