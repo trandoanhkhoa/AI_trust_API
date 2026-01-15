@@ -12,14 +12,14 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
 /* =========================
- * LOAD ENV
+ * ENV
  * ========================= */
 builder.Configuration.AddEnvironmentVariables();
 
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
 
 /* =========================
- * DATABASE (PostgreSQL Railway)
+ * DATABASE
  * ========================= */
 builder.Services.AddDbContext<AiTrustContext>(options =>
 {
@@ -41,7 +41,6 @@ builder.Services.AddDbContext<AiTrustContext>(options =>
     }
     else
     {
-        // Local only
         options.UseNpgsql(
             builder.Configuration.GetConnectionString("PostgresConnection")
         );
@@ -56,18 +55,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReactApp", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "https://aitrustapi-production.up.railway.app"
-            )
+            .WithOrigins("http://localhost:5173")
             .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowAnyMethod();
     });
 });
 
 /* =========================
- * RAILWAY PORT (BẮT BUỘC)
+ * PORT (RAILWAY BẮT BUỘC)
  * ========================= */
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
@@ -78,29 +73,14 @@ if (!string.IsNullOrEmpty(port))
 var app = builder.Build();
 
 /* =========================
- * AUTO MIGRATE DB (SAFE)
- * ========================= */
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AiTrustContext>();
-    db.Database.Migrate();
-}
-
-/* =========================
  * MIDDLEWARE
  * ========================= */
 app.UseCors("AllowReactApp");
 
-// Swagger bật cho Railway (debug)
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// Railway đã HTTPS sẵn → KHÔNG redirect nữa
-if (!app.Environment.IsProduction())
-{
-    app.UseHttpsRedirection();
-}
-
+// 🚫 KHÔNG HTTPS redirect trên Railway
 app.UseAuthorization();
 app.MapControllers();
 
