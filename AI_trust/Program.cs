@@ -17,7 +17,7 @@ builder.Services.AddHttpClient();
 builder.Configuration.AddEnvironmentVariables();
 
 var groqKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+var databaseUrl =  Environment.GetEnvironmentVariable("DATABASE_URL");
 
 builder.Services.AddDbContext<AiTrustContext>(options =>
 {
@@ -61,12 +61,12 @@ builder.Services.AddCors(options =>
 });
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AiTrustContext>();
-    db.Database.EnsureCreated();
-}
-app.UseCors("AllowReactApp");
+//using (var scope = app.Services.CreateScope())
+//{
+//    var db = scope.ServiceProvider.GetRequiredService<AiTrustContext>();
+//    db.Database.EnsureCreated();
+//}
+//app.UseCors("AllowReactApp");
 
 
 
