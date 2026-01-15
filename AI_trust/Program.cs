@@ -9,18 +9,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient();
 
 /* =========================
  * ENV
  * ========================= */
 builder.Configuration.AddEnvironmentVariables();
 
-var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-
 /* =========================
  * DATABASE
  * ========================= */
+var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
+
 builder.Services.AddDbContext<AiTrustContext>(options =>
 {
     if (!string.IsNullOrWhiteSpace(databaseUrl))
@@ -52,17 +51,20 @@ builder.Services.AddDbContext<AiTrustContext>(options =>
  * ========================= */
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("https://cr-test-ai.vercel.app/")
+            .WithOrigins(
+                "https://cr-test-ai.vercel.app",
+                "http://localhost:5173"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
 
 /* =========================
- * PORT (RAILWAY BẮT BUỘC)
+ * PORT (RAILWAY)
  * ========================= */
 var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
@@ -75,12 +77,14 @@ var app = builder.Build();
 /* =========================
  * MIDDLEWARE
  * ========================= */
-app.UseCors("AllowReactApp");
+app.UseCors("AllowFrontend");
 
-app.UseSwagger();
-app.UseSwaggerUI();
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
-// 🚫 KHÔNG HTTPS redirect trên Railway
 app.UseAuthorization();
 app.MapControllers();
 
