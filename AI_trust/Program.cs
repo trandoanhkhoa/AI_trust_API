@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient(); // ✅ FIX QUAN TRỌNG
+builder.Services.AddHttpClient(); 
 
 /* =========================
  * ENV

@@ -97,31 +97,57 @@ namespace AI_trust.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] User newUser)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest req)
         {
-            Random rnd = new Random();
-            int rdnumber = rnd.Next(1000, 9999);
-            newUser.Username = newUser.Email;
-            newUser.Password = "user" + newUser.Yearofbirth + rdnumber.ToString();
-            newUser.Role = "user";
-            newUser.Dotest = false;
-            newUser.Typeoftest = rnd.Next(0,2); 
-            var existingUser = await _db.Users.AnyAsync(u => u.Username == newUser.Username || u.Email == newUser.Email);
-            if (existingUser)
-                return Ok(new { status = false, message = "Email này đã đăng ký "});
-
-
-            
-            bool checkExist = SendAccountEmail(newUser.Email, newUser.Name, newUser.Username, newUser.Password); 
-            if (!checkExist)
+            try
             {
-                Ok(new { status = false, userid = newUser.Id, message = "Email này có vẻ không tồn tại ! Vui lòng thử lại" });
+                var existingUser = await _db.Users.AnyAsync(
+                    u => u.Email == req.Email
+                );
+
+                if (existingUser)
+                    return Ok(new { status = false, message = "Email này đã đăng ký" });
+
+                Random rnd = new Random();
+                int rdnumber = rnd.Next(1000, 9999);
+
+                var newUser = new User
+                {
+                    Name = req.Name,
+                    Email = req.Email,
+                    Username = req.Email,
+                    Gender = req.Gender,
+                    Major = req.Major,
+                    StudyYear = req.StudyYear,
+                    Gpa = req.Gpa,
+                    Yearofbirth = req.Yearofbirth,
+                    Role = "user",
+                    Dotest = false,
+                    Typeoftest = rnd.Next(0, 2),
+                    Password = $"user{req.Yearofbirth}{rdnumber}"
+                };
+
+                bool checkExist = SendAccountEmail(
+                    newUser.Email,
+                    newUser.Name,
+                    newUser.Username,
+                    newUser.Password
+                );
+
+                if (!checkExist)
+                    return Ok(new { status = false, message = "Email không tồn tại" });
+
+                _db.Users.Add(newUser);
+                await _db.SaveChangesAsync();
+
+                return Ok(new { status = true, userid = newUser.Id });
             }
-            _db.Users.Add(newUser);
-            await _db.SaveChangesAsync();
-           
-            return Ok(new { status = true, userid = newUser.Id, message = "✅ Đăng kí thông tin thành công!" });
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
+
 
         public static bool SendAccountEmail(string toEmail,string name,string username,string password)
         {
@@ -159,7 +185,7 @@ namespace AI_trust.Controllers
             catch (Exception ex)
             {
                 // 👉 Log lỗi (rất nên làm)
-                Console.WriteLine("Send email failed: " + ex.Message);
+                //Console.WriteLine("Send email failed: " + ex.Message);
 
                 return false; // ❌ Gửi thất bại
             }
@@ -208,7 +234,7 @@ namespace AI_trust.Controllers
     ⚠️ <b>Chú ý:</b><br/>
     Vui lòng <u>không cung cấp</u> thông tin tài khoản này cho bất kỳ ai khác!
 </div>
-    <a href='http://localhost:5173//login'
+    <a href='https://cr-test-ai.vercel.app/login'
        style='display:inline-block; margin-top:12px;
               padding:12px 20px; background:#2563eb;
               color:#ffffff; text-decoration:none;

@@ -80,4 +80,15 @@
         public DateTime? Time { get; set; }
     }
 
+    public class RegisterRequest
+    {
+        public string? Name { get; set; }
+        public string? Email { get; set; }
+        public string? Gender { get; set; }
+        public string? Major { get; set; }
+        public string? StudyYear { get; set; }
+        public decimal? Gpa { get; set; }
+        public int Yearofbirth { get; set; }
+    }
+
 }
