@@ -17,7 +17,7 @@ namespace AI_trust.Controllers
         [HttpGet("allsurveys")]
         public IActionResult GetAllSurveys()
         {
-            var surveys = db.Surveys.ToList();
+            var surveys = db.Surveys.OrderBy(s => s.Id).ToList();
             return Ok(surveys);
         }
         [HttpPost("submitsurvey")]
