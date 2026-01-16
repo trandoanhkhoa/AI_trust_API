@@ -129,20 +129,23 @@ namespace AI_trust.Controllers
                 _db.Users.Add(newUser);
                 await _db.SaveChangesAsync();
 
-                bool checkExist = SendAccountEmail(
-                    newUser.Email,
-                    newUser.Name,
-                    newUser.Username,
-                    newUser.Password
-                );
-                if (!checkExist)
+                _ = Task.Run(() =>
                 {
-                    return BadRequest(new
-                    {
-                        status = false,
-                        message = "Không thể gửi email. Vui lòng thử lại sau."
-                    });
-                }
+                    SendAccountEmail(
+                        newUser.Email,
+                        newUser.Name,
+                        newUser.Username,
+                        newUser.Password
+                    );
+                });
+                //if (!checkExist)
+                //{
+                //    return BadRequest(new
+                //    {
+                //        status = false,
+                //        message = "Không thể gửi email. Vui lòng thử lại sau."
+                //    });
+                //}
 
                 return Ok(new { status = true, userid = newUser.Id });
             }
@@ -188,9 +191,6 @@ namespace AI_trust.Controllers
             }
             catch (Exception ex)
             {
-                // 👉 Log lỗi (rất nên làm)
-                //Console.WriteLine("Send email failed: " + ex.Message);
-
                 return false; // ❌ Gửi thất bại
             }
         }
