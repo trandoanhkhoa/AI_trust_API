@@ -133,10 +133,6 @@ namespace AI_trust.Controllers
                     newUser.Username,
                     newUser.Password
                 );
-
-                if (!checkExist)
-                    return Ok(new { status = false, message = "Email không tồn tại" });
-
                 _db.Users.Add(newUser);
                 await _db.SaveChangesAsync();
 
