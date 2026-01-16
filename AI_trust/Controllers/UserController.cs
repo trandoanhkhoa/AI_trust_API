@@ -126,6 +126,8 @@ namespace AI_trust.Controllers
                     Typeoftest = rnd.Next(0, 2),
                     Password = $"user{req.Yearofbirth}{rdnumber}"
                 };
+                _db.Users.Add(newUser);
+                await _db.SaveChangesAsync();
 
                 bool checkExist = SendAccountEmail(
                     newUser.Email,
@@ -133,8 +135,14 @@ namespace AI_trust.Controllers
                     newUser.Username,
                     newUser.Password
                 );
-                _db.Users.Add(newUser);
-                await _db.SaveChangesAsync();
+                if (!checkExist)
+                {
+                    return BadRequest(new
+                    {
+                        status = false,
+                        message = "Không thể gửi email. Vui lòng thử lại sau."
+                    });
+                }
 
                 return Ok(new { status = true, userid = newUser.Id });
             }
