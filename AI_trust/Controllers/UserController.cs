@@ -33,7 +33,6 @@ namespace AI_trust.Controllers
                 return Ok(new { status = false, message="Tài khoản hoặc mật khẩu không đúng" });
             return Ok(new { status = true, token = user.Name, userid = user.Id, role = user.Role, doTest = user.Dotest,typeOfTest =user.Typeoftest });
         }
-
         [HttpPost("submittest")]
         public async Task<IActionResult> SubmitTest([FromBody] SubmitTestRequest request)
         {
@@ -147,7 +146,7 @@ namespace AI_trust.Controllers
                 //    });
                 //}
 
-                return Ok(new { status = true, userid = newUser.Id });
+                return Ok(new { status = true, userid = newUser.Id, username = newUser.Email,password = newUser.Password });
             }
             catch (Exception ex)
             {
