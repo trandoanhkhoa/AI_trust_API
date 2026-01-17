@@ -112,8 +112,10 @@ namespace AI_trust.Controllers
                 // ✅ User hỏi về đáp án → dùng CSDL
                 if (request.questiontrytimes < question.Timetries)
                 {
-                    finalPrompt = $@"Hãy trả lời câu này:{request.text}
-                                     dựa trên câu trả lời này (bạn có thể trả lời dài hoặc ngắn):{question.Hallucination}";
+                    finalPrompt = $@"Đây là câu hỏi của người dùng :{request.text}
+                    Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi của người dùng.
+                    Ví dụ người dùng hỏi đáp án nào thì trả lời đáp án đó chứ KHÔNG giải thích hết tất cả đáp án bằng cách so sánh, giải thích, phân tích đáp án đúng với câu trả lời của người dùng.
+                    Đây là các giải thích cho các câu hỏi và các đáp án đúng :{question.Hallucination}"";";
                 }
                 else
                 {
