@@ -1,7 +1,8 @@
-﻿using AI_trust.Models;
+﻿using AI_trust.DTOs;
+using AI_trust.Models;
+using DocumentFormat.OpenXml.Office2010.Excel;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using AI_trust.DTOs;
 using Microsoft.Extensions.Options;
 using System.Net;
 using System.Net.Mail;
@@ -128,15 +129,15 @@ namespace AI_trust.Controllers
                 _db.Users.Add(newUser);
                 await _db.SaveChangesAsync();
 
-                _ = Task.Run(() =>
-                {
-                    SendAccountEmail(
-                        newUser.Email,
-                        newUser.Name,
-                        newUser.Username,
-                        newUser.Password
-                    );
-                });
+                //_ = Task.Run(() =>
+                //{
+                //    SendAccountEmail(
+                //        newUser.Email,
+                //        newUser.Name,
+                //        newUser.Username,
+                //        newUser.Password
+                //    );
+                //});
                 //if (!checkExist)
                 //{
                 //    return BadRequest(new
@@ -154,11 +155,12 @@ namespace AI_trust.Controllers
             }
         }
 
-
-        public static bool SendAccountEmail(string toEmail,string name,string username,string password)
+        [HttpPost("sendemail/{userid}")]
+        public async Task<IActionResult>  SendAccountEmail(int userid)
         {
             try
             {
+                var user = await _db.Users.SingleOrDefaultAsync(x => x.Id == userid);
                 // ===== SMTP CONFIG =====
                 using SmtpClient smtpClient = new SmtpClient("smtp.gmail.com", 587)
                 {
@@ -179,18 +181,18 @@ namespace AI_trust.Controllers
                     ),
                     Subject = "🎉 Thông tin tài khoản khảo sát – Critical reasoning test",
                     IsBodyHtml = true,
-                    Body = BuildHtmlEmail(name, username, password)
+                    Body = BuildHtmlEmail(user.Name, user.Username, user.Password)
                 };
 
-                mail.To.Add(new MailAddress(toEmail));
+                mail.To.Add(new MailAddress(user.Email));
 
                 smtpClient.Send(mail); // ❗ Nếu lỗi → throw exception
 
-                return true; // ✅ Gửi thành công
+                return Ok(new { status = true, message = "Gửi mail thành công" });
             }
             catch (Exception ex)
             {
-                return false; // ❌ Gửi thất bại
+                return Ok(new { status = true, message = "Gửi mail không thành công. Vui lòng kiểm tra lại Email" });
             }
         }
 
