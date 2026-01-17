@@ -105,9 +105,7 @@ public partial class AiTrustContext : DbContext
             entity.Property(e => e.Question)
                 .HasMaxLength(250)
                 .HasColumnName("question");
-            entity.Property(e => e.Type)
-                .HasMaxLength(100)
-                .HasColumnName("question");
+           
         });
 
         modelBuilder.Entity<User>(entity =>
