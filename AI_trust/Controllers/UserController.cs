@@ -184,7 +184,7 @@ namespace AI_trust.Controllers
                 mail.To.Add(user.Email);
 
                 // ✅ ASYNC – KHÔNG BLOCK
-                await smtpClient.SendMailAsync(mail);
+                _ = Task.Run(() => smtpClient.SendMailAsync(mail));
 
                 return Ok(new { status = true, message = "Gửi mail thành công" });
             }
