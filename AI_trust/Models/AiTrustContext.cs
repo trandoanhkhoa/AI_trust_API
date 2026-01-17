@@ -31,7 +31,7 @@ public partial class AiTrustContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
-        => optionsBuilder.UseNpgsql("Host=switchback.proxy.rlwy.net;Port=51470;Database=AI_trust;Username=postgres;Password=CviFTMDmdfFiUkBpORdfxFnickiZXfcK");
+        => optionsBuilder.UseNpgsql("postgresql://postgres:CviFTMDmdfFiUkBpORdfxFnickiZXfcK@switchback.proxy.rlwy.net:51470/AI_trust");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
