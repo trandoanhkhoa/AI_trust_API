@@ -156,45 +156,49 @@ namespace AI_trust.Controllers
         }
 
         [HttpPost("sendemail/{userid}")]
-        public async Task<IActionResult>  SendAccountEmail(int userid)
+        public async Task<IActionResult> SendAccountEmail(int userid)
         {
             try
             {
                 var user = await _db.Users.SingleOrDefaultAsync(x => x.Id == userid);
-                // ===== SMTP CONFIG =====
-                using SmtpClient smtpClient = new SmtpClient("smtp.gmail.com", 587)
+                if (user == null)
+                    return NotFound("User không tồn tại");
+
+                using var smtpClient = new SmtpClient("smtp.gmail.com", 587)
                 {
                     Credentials = new NetworkCredential(
                         "trankhoa192837@gmail.com",
-                        "gcns uizw cldd wvgs"   // App Password
+                        "gcns uizw cldd wvgs" // App Password
                     ),
-                    DeliveryMethod = SmtpDeliveryMethod.Network,
                     EnableSsl = true
                 };
 
-                // ===== MAIL =====
-                using MailMessage mail = new MailMessage
+                using var mail = new MailMessage
                 {
-                    From = new MailAddress(
-                        "trankhoa192837@gmail.com",
-                        "CRTest"
-                    ),
+                    From = new MailAddress("trankhoa192837@gmail.com", "CRTest"),
                     Subject = "🎉 Thông tin tài khoản khảo sát – Critical reasoning test",
-                    IsBodyHtml = true,
-                    Body = BuildHtmlEmail(user.Name, user.Username, user.Password)
+                    Body = BuildHtmlEmail(user.Name, user.Username, user.Password),
+                    IsBodyHtml = true
                 };
 
-                mail.To.Add(new MailAddress(user.Email));
+                mail.To.Add(user.Email);
 
-                smtpClient.Send(mail); // ❗ Nếu lỗi → throw exception
+                // ✅ ASYNC – KHÔNG BLOCK
+                await smtpClient.SendMailAsync(mail);
 
                 return Ok(new { status = true, message = "Gửi mail thành công" });
             }
             catch (Exception ex)
             {
-                return Ok(new { status = true, message = "Gửi mail không thành công. Vui lòng kiểm tra lại Email" });
+                return StatusCode(500, new
+                {
+                    status = false,
+                    message = "Gửi mail thất bại",
+                    error = ex.Message
+                });
             }
         }
+
 
         private static string BuildHtmlEmail(string name,string username,string password)
         {
