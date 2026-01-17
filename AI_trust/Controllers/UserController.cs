@@ -130,24 +130,6 @@ namespace AI_trust.Controllers
                 _db.Users.Add(newUser);
                 await _db.SaveChangesAsync();
 
-                //_ = Task.Run(() =>
-                //{
-                //    SendAccountEmail(
-                //        newUser.Email,
-                //        newUser.Name,
-                //        newUser.Username,
-                //        newUser.Password
-                //    );
-                //});
-                //if (!checkExist)
-                //{
-                //    return BadRequest(new
-                //    {
-                //        status = false,
-                //        message = "Không thể gửi email. Vui lòng thử lại sau."
-                //    });
-                //}
-
                 return Ok(new { status = true, userid = newUser.Id, username = newUser.Email,password = newUser.Password });
             }
             catch (Exception ex)
