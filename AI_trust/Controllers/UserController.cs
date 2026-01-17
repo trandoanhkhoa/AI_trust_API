@@ -1,6 +1,7 @@
 ﻿using AI_trust.DTOs;
 using AI_trust.Models;
 using DocumentFormat.OpenXml.Office2010.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -158,45 +159,41 @@ namespace AI_trust.Controllers
         [HttpPost("sendemail/{userid}")]
         public async Task<IActionResult> SendAccountEmail(int userid)
         {
-            try
+           
+            _ = Task.Run(async () =>
             {
-                var user = await _db.Users.SingleOrDefaultAsync(x => x.Id == userid);
-                if (user == null)
-                    return NotFound("User không tồn tại");
-
-                using var smtpClient = new SmtpClient("smtp.gmail.com", 587)
+                try
                 {
-                    Credentials = new NetworkCredential(
-                        "trankhoa192837@gmail.com",
-                        "gcns uizw cldd wvgs" // App Password
-                    ),
-                    EnableSsl = true
-                };
+                    var user = await _db.Users.SingleOrDefaultAsync(x => x.Id == userid);
+                    using var smtp = new SmtpClient("smtp.gmail.com", 587)
+                    {
+                        Credentials = new NetworkCredential(
+                            "trankhoa192837@gmail.com",
+                            "gcns uizw cldd wvgs"
+                        ),
+                        EnableSsl = true
+                    };
 
-                using var mail = new MailMessage
+                    using var mail = new MailMessage
+                    {
+                        From = new MailAddress("trankhoa192837@gmail.com", "CRTest"),
+                        Subject = "🎉 Thông tin tài khoản khảo sát – Critical reasoning test",
+                        Body = BuildHtmlEmail(user.Name, user.Username, user.Password),
+                        IsBodyHtml = true
+                    };
+
+                    mail.To.Add(user.Email);
+
+                    await smtp.SendMailAsync(mail);
+                }
+                catch (Exception ex)
                 {
-                    From = new MailAddress("trankhoa192837@gmail.com", "CRTest"),
-                    Subject = "🎉 Thông tin tài khoản khảo sát – Critical reasoning test",
-                    Body = BuildHtmlEmail(user.Name, user.Username, user.Password),
-                    IsBodyHtml = true
-                };
+                    Console.WriteLine("SEND MAIL ERROR: " + ex.Message);
+                }
+            });
 
-                mail.To.Add(user.Email);
+            return Ok(new { status = true, message = "Đã nhận yêu cầu gửi mail" });
 
-                // ✅ ASYNC – KHÔNG BLOCK
-                _ = Task.Run(() => smtpClient.SendMailAsync(mail));
-
-                return Ok(new { status = true, message = "Gửi mail thành công" });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new
-                {
-                    status = false,
-                    message = "Gửi mail thất bại",
-                    error = ex.Message
-                });
-            }
         }
 
 
