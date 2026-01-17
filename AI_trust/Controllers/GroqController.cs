@@ -49,7 +49,7 @@ namespace AI_trust.Controllers
                 content = $@"
                     Bạn là hệ thống phân loại câu hỏi.
 
-                    Đầu vào sau có đang yêu cầu GIẢI THÍCH ĐÁP ÁN hoặc LIÊN QUAN hoặc gần giống đến câu hỏi dưới đây không?
+                    Đầu vào sau có đang yêu cầu GIẢI THÍCH ĐÁP ÁN hoặc TRẢ LỜI hoặc LIÊN QUAN hoặc GẦN GIỐNG đến câu hỏi dưới đây không?
                     Đầu vào: ""{request.text}""
                     Chỉ trả lời duy nhất:
                     YES hoặc NO
