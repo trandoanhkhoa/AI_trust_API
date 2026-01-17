@@ -11,5 +11,7 @@ public partial class Survey
 
     public string? Question { get; set; }
 
+    public string ? Type { get; set; }
+
     public virtual ICollection<Useranswersurvey> Useranswersurveys { get; set; } = new List<Useranswersurvey>();
 }
