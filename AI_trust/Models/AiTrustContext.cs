@@ -29,9 +29,9 @@ public partial class AiTrustContext : DbContext
 
     public virtual DbSet<Useranswersurvey> Useranswersurveys { get; set; }
 
-    //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 
-    //    => optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=AI_trust;Username=postgres;Password=120303;SSL Mode=Disable");
+        => optionsBuilder.UseNpgsql("Host=switchback.proxy.rlwy.net;Port=51470;Database=AI_trust;Username=postgres;Password=CviFTMDmdfFiUkBpORdfxFnickiZXfcK");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,7 +105,9 @@ public partial class AiTrustContext : DbContext
             entity.Property(e => e.Question)
                 .HasMaxLength(250)
                 .HasColumnName("question");
-           
+            entity.Property(e => e.Type)
+                .HasMaxLength(100)
+                .HasColumnName("type");
         });
 
         modelBuilder.Entity<User>(entity =>
