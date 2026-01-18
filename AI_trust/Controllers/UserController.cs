@@ -16,13 +16,13 @@ namespace AI_trust.Controllers
     public class UserController : ControllerBase
     {
         private readonly AiTrustContext _db;
-        
+
 
         public UserController(AiTrustContext db)
         {
             _db = db;
-           
-        }   
+
+        }
         [HttpPost("checklogin")]
         public async Task<IActionResult> CheckLogin([FromBody] AccountUser acc)
         {
@@ -32,8 +32,8 @@ namespace AI_trust.Controllers
             );
 
             if (user == null)
-                return Ok(new { status = false, message="Tài khoản hoặc mật khẩu không đúng" });
-            return Ok(new { status = true, token = user.Name, userid = user.Id, role = user.Role, doTest = user.Dotest,typeOfTest =user.Typeoftest });
+                return Ok(new { status = false, message = "Tài khoản hoặc mật khẩu không đúng" });
+            return Ok(new { status = true, token = user.Name, userid = user.Id, role = user.Role, doTest = user.Dotest, typeOfTest = user.Typeoftest });
         }
         [HttpPost("submittest")]
         public async Task<IActionResult> SubmitTest([FromBody] SubmitTestRequest request)
@@ -130,7 +130,7 @@ namespace AI_trust.Controllers
                 _db.Users.Add(newUser);
                 await _db.SaveChangesAsync();
 
-                return Ok(new { status = true, userid = newUser.Id, username = newUser.Email,password = newUser.Password });
+                return Ok(new { status = true, userid = newUser.Id, username = newUser.Email, password = newUser.Password });
             }
             catch (Exception ex)
             {
@@ -159,7 +159,7 @@ namespace AI_trust.Controllers
                     return NotFound(new { status = false, message = "User không tồn tại" });
 
                 // ✅ GỬI MAIL ASYNC – KHÔNG BLOCK
-                await SendMailAsync(user);
+                //await SendMailAsync(user);
 
                 return Ok(new
                 {
@@ -177,32 +177,39 @@ namespace AI_trust.Controllers
                 });
             }
         }
+
+
         private async Task SendMailAsync(EmailUserDto user)
         {
-            using var smtpClient = new SmtpClient("smtp.gmail.com", 587)
-            {
-                Credentials = new NetworkCredential(
-                    "trankhoa192837@gmail.com",
-                    "gcns uizw cldd wvgs" // App Password
-                ),
-                EnableSsl = true
-            };
+           // try
+           // {
+           //     var apiToken = "re_4kNo7T4T_DfPkrPXUsZdwy4B1ytunGJpK";
+           //     //Environment.GetEnvironmentVariable("RESEND_API_KEY");
+           //     //new ResendClient("RESEND_API_KEY");
 
-            using var mail = new MailMessage
-            {
-                From = new MailAddress("trankhoa192837@gmail.com", "CRTest"),
-                Subject = "🎉 Thông tin tài khoản khảo sát – Critical reasoning test",
-                Body = BuildHtmlEmail(user.Name, user.Username, user.Password),
-                IsBodyHtml = true
-            };
+           //     var options = new ResendClientOptions()
+           //     {
+           //         ApiToken = apiToken,
+           //     };
+           //     var resend = ResendClient.Create(options);
 
-            mail.To.Add(user.Email);
+           //     var resp = await resend.EmailSendAsync(new EmailMessage()
+           //     {
+           //         From = "CRTest <onboarding@resend.dev>",
+           //         To = "mrbonenglish@gmail.com",
+           //         Subject = "Hello World",
+           //         HtmlBody = "<p>Congrats on sending your <strong>first email</strong>!</p>",
+           //     });
+           // }
+           //catch(Exception ex)
+           // {
 
-            // ✅ GỬI MAIL
-            await smtpClient.SendMailAsync(mail);
+           // }
+
+            //await resend.EmailSendAsync(email);
         }
 
-        private static string BuildHtmlEmail(string name,string username,string password)
+        private static string BuildHtmlEmail(string name, string username, string password)
         {
             return $@"
 <!DOCTYPE html>

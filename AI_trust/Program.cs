@@ -57,6 +57,7 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "https://cr-test-ai.vercel.app",
+                "https://aitrust-eight.vercel.app",
                 "http://localhost:5173"
             )
             .AllowAnyHeader()
