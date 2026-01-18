@@ -67,9 +67,8 @@
         public string UserAnswer { get; set; }
         public int TryTimes { get; set; }
         public bool useTime { get; set; }
-
-        public DateTime StartedAt { get; set; }
-        public DateTime SubmittedAt { get; set; }
+        public DateTime? StartedAt { get; set; }
+        public DateTime? SubmittedAt { get; set; }
     }
     public class UserAiResponseDto
     {
