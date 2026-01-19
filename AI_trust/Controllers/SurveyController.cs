@@ -28,9 +28,6 @@ namespace AI_trust.Controllers
 
             foreach (var answer in request)
             {
-                if (answer.Score < 1 || answer.Score > 10)
-                    return BadRequest("Score must be between 1 and 10");
-
                 var entity = new Useranswersurvey
                 {
                     Userid = answer.UserId,
