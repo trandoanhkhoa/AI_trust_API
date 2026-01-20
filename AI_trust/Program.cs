@@ -47,23 +47,6 @@ builder.Services.AddDbContext<AiTrustContext>(options =>
     }
 });
 
-/* =========================
- * CORS
- * ========================= */
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy
-            .WithOrigins(
-                "https://cr-test-ai.vercel.app",
-                "https://aitrust-eight.vercel.app",
-                "http://localhost:5173"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
-});
 
 /* =========================
  * PORT (RAILWAY)
@@ -83,13 +66,39 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseRouting();
 
-app.UseCors("AllowFrontend");
+/* ===== GLOBAL CORS MIDDLEWARE (QUYẾT ĐỊNH DUY NHẤT) ===== */
+app.Use(async (context, next) =>
+{
+    var origin = context.Request.Headers["Origin"].FirstOrDefault();
+    var allowedOrigins = new[]
+    {
+        "https://aitrust-eight.vercel.app",
+        "http://localhost:5173"
+    };
+
+    if (!string.IsNullOrEmpty(origin) &&
+        allowedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
+    {
+        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+        context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
+        context.Response.Headers["Access-Control-Allow-Methods"] =
+            "GET,POST,PUT,DELETE,OPTIONS";
+        context.Response.Headers["Access-Control-Allow-Headers"] =
+            "Content-Type, Authorization";
+        context.Response.Headers["Vary"] = "Origin";
+    }
+
+    if (context.Request.Method == HttpMethods.Options)
+    {
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+        return;
+    }
+
+    await next();
+});
 
 app.UseAuthorization();
-
 app.MapControllers();
-
 app.Run();
