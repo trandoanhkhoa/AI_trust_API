@@ -116,29 +116,30 @@ namespace AI_trust.Controllers
         //    return IsSimilarToQuestion(request.text, question);
         //}
 
-
         [HttpPost("isaskingaboutanswerasync")]
         public async Task<bool> IsAskingAboutAnswerAsync([FromBody] UserMessage request)
         {
-            //string apiKey = _config["Groq:ApiKey"];
-            string apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+            var apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+            if (string.IsNullOrWhiteSpace(apiKey))
+                throw new Exception("GROQ_API_KEY is missing");
 
-            string endpoint = "https://api.groq.com/openai/v1/chat/completions";
-            string question = db.Questions.SingleOrDefault(x => x.Id == request.idquestioncurrent)?.Question1;
+            var question = db.Questions
+                .Where(x => x.Id == request.idquestioncurrent)
+                .Select(x => x.Question1)
+                .FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(question))
+                return false;
 
             var client = _httpClientFactory.CreateClient();
-            client.DefaultRequestHeaders.Clear();
             client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", apiKey);
-            client.DefaultRequestHeaders.Accept.Add(
-                new MediaTypeWithQualityHeaderValue("application/json")
-            );
 
             var payload = new
             {
                 model = "llama-3.3-70b-versatile",
                 messages = new[]
-                {
+               {
             new {
                 role = "user",
                 content = $@"
@@ -156,18 +157,37 @@ namespace AI_trust.Controllers
                 temperature = 0
             };
 
-            var json = JsonSerializer.Serialize(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
 
-            var response = await client.PostAsync(endpoint, content);
+            var response = await client.PostAsync(
+                "https://api.groq.com/openai/v1/chat/completions",
+                content
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Groq API error: {error}");
+            }
+
             var result = await response.Content.ReadAsStringAsync();
-
             var groqResponse = JsonSerializer.Deserialize<GroqChatResponse>(result);
-            string intent = groqResponse.choices[0].message.content.Trim().ToUpper();
+
+            var intent = groqResponse?.choices?
+                .FirstOrDefault()?
+                .message?
+                .content?
+                .Trim()
+                .ToUpper();
 
             return intent == "YES";
         }
 
+       
         [HttpPost("chat")]
         public async Task<IActionResult> Chat([FromBody] UserMessage request)
         {
