@@ -227,7 +227,7 @@ namespace AI_trust.Controllers
                 }
                 else
                 {
-                    if (request.questiontrytimes < 1)
+                    if (request.questiontrytimes <=1)
                     {
                         finalPrompt = $@"
                      {historyBlock}
