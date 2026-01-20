@@ -122,7 +122,7 @@ namespace AI_trust.Controllers
         {
             //string apiKey = _config["Groq:ApiKey"];
             string apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-            
+
             string endpoint = "https://api.groq.com/openai/v1/chat/completions";
             string question = db.Questions.SingleOrDefault(x => x.Id == request.idquestioncurrent)?.Question1;
 
@@ -173,7 +173,7 @@ namespace AI_trust.Controllers
         {
             //string apiKey = _config["Groq:ApiKey"];
             string apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-             
+
             string endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
             var client = _httpClientFactory.CreateClient();
@@ -193,7 +193,7 @@ namespace AI_trust.Controllers
 
             // 🔥 BƯỚC 1: HỎI AI PHÂN LOẠI INTENT
             bool isAskingAboutAnswer = request.isaskingaboutanswer;
-            
+
             // 🔥 BƯỚC 2: QUYẾT ĐỊNH PROMPT
             if (!isAskingAboutAnswer)
             {
@@ -227,8 +227,9 @@ namespace AI_trust.Controllers
                 }
                 else
                 {
-
-                    finalPrompt = $@"
+                    if (request.questiontrytimes < 2)
+                    {
+                        finalPrompt = $@"
                      {historyBlock}
                     Đây là câu hỏi của người dùng :{request.text}
                     Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi của người dùng.
@@ -239,11 +240,12 @@ namespace AI_trust.Controllers
                  
                     
                     Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn] ";
-                    if(request.questiontrytimes >= 3)
-                    {
-                        finalPrompt += "\n Bạn có thể cân nhắc đưa ra đáp án đúng " + question.Correctanswer; 
                     }
-                    
+                    else // >=2 
+                    {
+                        finalPrompt =  $@"{historyBlock} \n Nếu như người dùng có khuynh hướng lập luận hoặc phản biện để đưa ra đáp án đúng, Bạn đưa ra đáp án đúng " + question.Correctanswerdesc;
+                    }
+
                 }
             }
 
