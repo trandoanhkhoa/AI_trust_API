@@ -76,15 +76,20 @@ if (!string.IsNullOrEmpty(port))
 
 var app = builder.Build();
 
-/* =========================
- * MIDDLEWARE
- * ========================= */
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
 app.UseCors("AllowFrontend");
 
-app.UseSwagger();
-app.UseSwaggerUI();
-
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
