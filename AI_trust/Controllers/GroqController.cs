@@ -1,11 +1,14 @@
-﻿using AI_trust.Models;
+﻿
+using AI_trust.Helps;
+using AI_trust.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-
+using System.Text.RegularExpressions;
 namespace AI_trust.Controllers
 {
     [ApiController]
@@ -15,6 +18,22 @@ namespace AI_trust.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _config;
         private readonly AiTrustContext db;
+        //private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
+        //{
+        //    // Trợ từ
+        //    "là","có","một","những","các","cho","với","về","của","này","đó","kia",
+        //    "trên","dưới","theo","khi","thì","mà","vì","do","tại","nên",
+
+        //    // Hỏi – đáp
+        //    "gì","sao","tại sao","vì sao","thế nào","như thế nào",
+        //    "giải","giải thích","phân tích","trả","lời","đáp","án","câu","hỏi",
+
+        //    // Hội thoại
+        //    "giúp","hộ","mình","tôi","bạn","em","anh","chị","xin",
+        //    "với","được","không","ạ","nhé","nha","đi", "ik"
+        //};
+
+
 
         public GroqController(IHttpClientFactory httpClientFactory, IConfiguration config, AiTrustContext _db)
         {
@@ -22,6 +41,82 @@ namespace AI_trust.Controllers
             _config = config;
             db = _db;
         }
+
+        //    private static HashSet<string> ExtractKeywords(string text)
+        //    {
+        //        return text
+        //            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        //            .Where(w => w.Length >= 3 && !StopWords.Contains(w))
+        //            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        //    }
+        //    private static bool IsAskingAboutQuestionIntent(string input)
+        //    {
+        //        string[] patterns =
+        //        {
+        //    "cau nay",
+        //    "cau hoi nay",
+        //    "cau tren",
+        //    "cau hoi tren",
+        //    "y nghia",
+        //    "la gi",
+        //    "tai sao",
+        //    "vi sao",
+        //    "giai thich",
+        //    "phan tich"
+        //};
+
+        //        return patterns.Any(p => input.Contains(p));
+        //    }
+
+        //    private static bool IsSimilarToQuestion(string userInput, string question)
+        //    {
+        //        string input = HtmlHelper.NormalizeText(userInput);
+        //        string q = HtmlHelper.NormalizeText(question);
+
+        //        var inputKeywords = ExtractKeywords(input);
+        //        var questionKeywords = ExtractKeywords(q);
+
+        //        if (inputKeywords.Count == 0 || questionKeywords.Count == 0)
+        //            return false;
+
+        //        int intersection = inputKeywords.Intersect(questionKeywords).Count();
+
+        //        bool hasIntent = IsAskingAboutQuestionIntent(input);
+
+        //        // ❌ Không có liên quan nội dung → reject
+        //        if (intersection == 0)
+        //            return false;
+
+        //        // ✅ Có liên quan nội dung
+        //        if (intersection >= 2)
+        //            return true;
+
+        //        // ✅ 1 keyword nhưng có intent hỏi
+        //        if (intersection == 1 && hasIntent)
+        //            return true;
+
+        //        // fuzzy match
+        //        double jaccard =
+        //            (double)intersection /
+        //            inputKeywords.Union(questionKeywords).Count();
+
+        //        return jaccard >= 0.35;
+        //    }
+
+
+
+        //[HttpPost("isaskingaboutanswerasync")]
+        //public async Task<bool> IsAskingAboutAnswerAsync([FromBody] UserMessage request)
+        //{
+        //    string? question = (await db.Questions.SingleOrDefaultAsync(x => x.Id == request.idquestioncurrent))?.Question1;
+
+        //    if (string.IsNullOrWhiteSpace(request.text) || string.IsNullOrWhiteSpace(question))
+        //        return false;
+
+        //    return IsSimilarToQuestion(request.text, question);
+        //}
+
+
         [HttpPost("isaskingaboutanswerasync")]
         public async Task<bool> IsAskingAboutAnswerAsync([FromBody] UserMessage request)
         {
@@ -57,7 +152,7 @@ namespace AI_trust.Controllers
                     Câu hỏi: ""{question}""
                     "
             }
-        },
+            },
                 temperature = 0
             };
 
@@ -71,16 +166,14 @@ namespace AI_trust.Controllers
             string intent = groqResponse.choices[0].message.content.Trim().ToUpper();
 
             return intent == "YES";
-           
-
         }
-        
+
         [HttpPost("chat")]
         public async Task<IActionResult> Chat([FromBody] UserMessage request)
         {
             //string apiKey = _config["Groq:ApiKey"];
             string apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-            
+             
             string endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
             var client = _httpClientFactory.CreateClient();
@@ -100,7 +193,7 @@ namespace AI_trust.Controllers
 
             // 🔥 BƯỚC 1: HỎI AI PHÂN LOẠI INTENT
             bool isAskingAboutAnswer = request.isaskingaboutanswer;
-
+            
             // 🔥 BƯỚC 2: QUYẾT ĐỊNH PROMPT
             if (!isAskingAboutAnswer)
             {
@@ -109,23 +202,48 @@ namespace AI_trust.Controllers
             }
             else
             {
+                request.MessageHistories = request.MessageHistories.TakeLast(5).ToList();
                 // ✅ User hỏi về đáp án → dùng CSDL
+
+                string historyBlock = "";
+
+                if (request.MessageHistories.Any())
+                {
+                    historyBlock = "Các câu trả lời trước đây của bạn cho câu hỏi này:\n";
+
+                    for (int i = 0; i < request.MessageHistories.Count; i++)
+                    {
+                        historyBlock += $"- Lần {i + 1}: {request.MessageHistories[i]}\n";
+                    }
+
+                    historyBlock +=
+                        "\n⚠️ Không được lặp lại các nội dung đã giải thích ở trên.\n";
+                }
+
                 if (request.questiontrytimes < question.Timetries)
                 {
-                    finalPrompt = $@"Đây là câu hỏi của người dùng :{request.text}
-                    Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi của người dùng.
-                    Ví dụ người dùng hỏi đáp án nào thì trả lời đáp án đó chứ KHÔNG giải thích hết tất cả đáp án bằng cách so sánh, giải thích, phân tích đáp án đúng với câu trả lời của người dùng.
-                    Đây là các giải thích cho các câu hỏi và các đáp án đúng :{question.Hallucination}"";";
+                    finalPrompt = $@"Hãy trả lời câu này:{request.text}
+                                     dựa trên câu trả lời này (bạn có thể trả lời dài hoặc ngắn):{question.Hallucination}"; ;
                 }
                 else
                 {
-                    finalPrompt = $@" 
+
+                    finalPrompt = $@"
+                     {historyBlock}
                     Đây là câu hỏi của người dùng :{request.text}
                     Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi của người dùng.
-                    Ví dụ người dùng hỏi đáp án nào thì trả lời đáp án đó chứ KHÔNG giải thích hết tất cả đáp án bằng cách so sánh, giải thích, phân tích đáp án đúng với câu trả lời của người dùng.
-                    Đây là các giải thích cho các câu hỏi và các đáp án đúng :{question.Correctanswerdesc}";
-
-
+                    - Giải thích và phân tích đáp án mà người dùng đang hỏi
+                    - Có thể so sánh với các đáp án khác nếu người dùng đề cập
+                    - Có thể giải thích lại các khía cạnh khác của đáp án nếu người dùng chưa hiểu
+                    IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
+                 
+                    
+                    Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn] ";
+                    if(request.questiontrytimes >= 3)
+                    {
+                        finalPrompt += "\n Bạn có thể cân nhắc đưa ra đáp án đúng " + question.Correctanswer; 
+                    }
+                    
                 }
             }
 
@@ -177,6 +295,8 @@ namespace AI_trust.Controllers
         public int idquestioncurrent { get; set; }
         public int questiontrytimes { get; set; }
         public bool isaskingaboutanswer { get; set; }
+
+        public List<string> MessageHistories { get; set; } = new();
     }
 
     public class GroqChatResponse
