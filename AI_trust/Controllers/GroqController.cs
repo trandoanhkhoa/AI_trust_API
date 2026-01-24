@@ -119,7 +119,7 @@ namespace AI_trust.Controllers
         [HttpPost("isaskingaboutanswerasync")]
         public async Task<bool> IsAskingAboutAnswerAsync([FromBody] UserMessage request)
         {
-            var apiKey = "sk-4ec80074fdb74f96b3a46ae8f2c6a9ae";//Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+            var apiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new Exception("DEEPSEEK_API_KEY is missing");
 
@@ -198,7 +198,6 @@ namespace AI_trust.Controllers
             //string apiKey = _config["Groq:ApiKey"];
             string apiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
             
-
             string endpoint = "https://api.deepseek.com/chat/completions";
 
             var client = _httpClientFactory.CreateClient();
@@ -240,31 +239,27 @@ namespace AI_trust.Controllers
                     {
                         historyBlock += $"- Lần {i + 1}: {request.MessageHistories[i]}\n";
                     }
-
-                    historyBlock +=
-                        "\n⚠️ Không được lặp lại các nội dung đã giải thích ở trên.\n";
                 }
 
                 if (request.questiontrytimes < question.Timetries)
                 {
                     finalPrompt = $@"Hãy trả lời câu này:{request.text}
-                                     dựa trên câu trả lời này (bạn có thể trả lời dài hoặc ngắn):{question.Hallucination}"; ;
+                                     dựa trên câu trả lời này (bạn có thể trả lời dài hoặc ngắn):{question.Hallucination}"; 
                 }
                 else
                 {
+                    
                     if (request.questiontrytimes <=2)
                     {
                         finalPrompt = $@"
                      {historyBlock}
-                    Đây là câu hỏi của người dùng :{request.text}
-                    Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi của người dùng.
-                    - Giải thích và phân tích đáp án mà người dùng đang hỏi
-                    - Có thể so sánh với các đáp án khác nếu người dùng đề cập
-                    - Có thể giải thích lại các khía cạnh khác của đáp án nếu người dùng chưa hiểu
+                    Đây là câu hỏi:{request.text}
+                    Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi.
+                    - Có thể so sánh và giải thích với các đáp án khác nếu người dùng đề cập
                     IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
-                 
                     
-                    Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: {question.Hallucination} [Đáp án của bạn] - [Giải thích của bạn] ";
+                    Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn cho từng đáp án]
+                    Đây là đáp án: {question.Hallucination}";
                     }
                     else // >=2 
                     {
@@ -292,7 +287,11 @@ namespace AI_trust.Controllers
 
             var groqResponse = JsonSerializer.Deserialize<GroqChatResponse>(result);
             string aiContent = groqResponse.choices[0].message.content;
-
+            aiContent = aiContent
+            .Replace("\r\n", "\n")
+            .Replace("\n\n", "\n")
+            .Replace("\r", " ")
+            .Trim();
             // 🔥 BƯỚC 4: LƯU DB
             var ResponseAiEntry = new Responseai
             {
