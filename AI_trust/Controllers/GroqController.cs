@@ -195,9 +195,10 @@ Câu hỏi: ""{question}""
         [HttpPost("chat")]
         public async Task<IActionResult> Chat([FromBody] UserMessage request)
         {
-            //string apiKey = _config["Groq:ApiKey"];
+            // 🔐 API KEY
             string apiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
-            
+            if (string.IsNullOrWhiteSpace(apiKey))
+                return StatusCode(500, "Missing DEEPSEEK_API_KEY");
 
             string endpoint = "https://api.deepseek.com/chat/completions";
 
@@ -209,107 +210,122 @@ Câu hỏi: ""{question}""
                 new MediaTypeWithQualityHeaderValue("application/json")
             );
 
-            string finalPrompt;
-
-            // Lấy câu hỏi trong CSDL
+            // 📌 LẤY CÂU HỎI
             var question = db.Questions.FirstOrDefault(q => q.Id == request.idquestioncurrent);
             if (question == null)
                 return BadRequest("Question not found");
 
-            // 🔥 BƯỚC 1: HỎI AI PHÂN LOẠI INTENT
             bool isAskingAboutAnswer = request.isaskingaboutanswer;
+            string finalPrompt;
 
-            // 🔥 BƯỚC 2: QUYẾT ĐỊNH PROMPT
+            // =========================
+            // 🔹 CASE 1: HỎI NGOÀI LỀ
+            // =========================
             if (!isAskingAboutAnswer)
             {
-                // ❌ User hỏi ngoài lề → trả lời theo câu hỏi user
                 finalPrompt = request.text;
             }
             else
             {
-                request.MessageHistories = request.MessageHistories.TakeLast(5).ToList();
-                // ✅ User hỏi về đáp án → dùng CSDL
+                // =========================
+                // 🔹 CASE 2: HỎI ĐÁP ÁN
+                // =========================
 
-                string historyBlock = "";
-
-                if (request.MessageHistories.Any())
-                {
-                    historyBlock = "Các câu trả lời trước đây của bạn cho câu hỏi này:\n";
-
-                    for (int i = 0; i < request.MessageHistories.Count; i++)
-                    {
-                        historyBlock += $"- Lần {i + 1}: {request.MessageHistories[i]}\n";
-                    }
-
-                    historyBlock +=
-                        "\n⚠️ Không được lặp lại các nội dung đã giải thích ở trên.\n";
-                }
+                // 👉 Không gửi raw history (giảm token)
+                string historyHint =
+                    request.MessageHistories != null && request.MessageHistories.Any()
+                    ? "Người dùng đã được giải thích trước đó, không lặp lại nội dung cũ.\n"
+                    : "";
 
                 if (request.questiontrytimes < question.Timetries)
                 {
-                    finalPrompt = $@"Hãy trả lời câu này:{request.text}
-                                     dựa trên câu trả lời này (bạn có thể trả lời dài hoặc ngắn):{question.Hallucination}"; ;
+                    // 🔹 GỢI Ý
+                    finalPrompt = $@"
+Câu hỏi: {request.text}
+Gợi ý: {question.Hallucination}
+";
                 }
                 else
                 {
-                    if (request.questiontrytimes <=1)
+                    if (request.questiontrytimes <= 1)
                     {
+                        // 🔹 GIẢI THÍCH
                         finalPrompt = $@"
-                     {historyBlock}
-                    Đây là câu hỏi của người dùng :{request.text}
-                    Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi của người dùng.
-                    - Giải thích và phân tích đáp án mà người dùng đang hỏi
-                    - Có thể so sánh với các đáp án khác nếu người dùng đề cập
-                    - Có thể giải thích lại các khía cạnh khác của đáp án nếu người dùng chưa hiểu
-                    IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
-                 
-                    
-                    Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn] ";
+{historyHint}
+Câu hỏi: {request.text}
+Hãy giải thích đáp án đúng một cách ngắn gọn, dễ hiểu.
+";
                     }
-                    else // >=2 
+                    else
                     {
-                        finalPrompt =  $@"{historyBlock} \n Nếu như người dùng có khuynh hướng lập luận hoặc phản biện để đưa ra đáp án đúng, Bạn đưa ra đáp án đúng " + question.Correctanswerdesc;
+                        // 🔹 ĐƯA ĐÁP ÁN CUỐI
+                        finalPrompt = $@"
+{historyHint}
+Người dùng lập luận nhiều.
+Đáp án đúng là: {question.Correctanswerdesc}
+Hãy giải thích vì sao đáp án này là đúng.
+";
                     }
-
                 }
             }
 
-            // 🔥 BƯỚC 3: GỬI PROMPT ĐẾN GROQ
+            // =========================
+            // 🔹 PAYLOAD (BẮT BUỘC TIẾNG VIỆT)
+            // =========================
             var requestPayload = new
             {
                 model = "deepseek-chat",
+                temperature = 0.2,
+                max_tokens = isAskingAboutAnswer ? 250 : 150,
                 messages = new[]
                 {
-                    new { role = "user", content = finalPrompt }
-                }
+            new
+            {
+                role = "system",
+                content = "Bạn là trợ lý AI. LUÔN LUÔN trả lời bằng tiếng Việt. Trả lời ngắn gọn, chính xác, không lan man, không lặp lại nội dung cũ."
+            },
+            new
+            {
+                role = "user",
+                content = finalPrompt
+            }
+        }
             };
 
-            string json = JsonSerializer.Serialize(requestPayload);
+            var json = JsonSerializer.Serialize(requestPayload);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
+            // =========================
+            // 🔹 GỌI DEEPSEEK
+            // =========================
             var response = await client.PostAsync(endpoint, content);
-            string result = await response.Content.ReadAsStringAsync();
+            var result = await response.Content.ReadAsStringAsync();
 
-            var groqResponse = JsonSerializer.Deserialize<GroqChatResponse>(result);
-            string aiContent = groqResponse.choices[0].message.content;
+            if (!response.IsSuccessStatusCode)
+                return StatusCode((int)response.StatusCode, result);
 
-            // 🔥 BƯỚC 4: LƯU DB
-            var ResponseAiEntry = new Responseai
+            var aiResponse = JsonSerializer.Deserialize<GroqChatResponse>(result);
+            string aiContent =
+                aiResponse?.choices?.FirstOrDefault()?.message?.content ?? "";
+
+            // =========================
+            // 🔹 LƯU DATABASE
+            // =========================
+            var responseAi = new Responseai
             {
                 Userid = request.iduser,
                 Questionid = request.idquestioncurrent,
                 Questionuser = request.text,
                 Answerai = aiContent,
                 Time = DateTime.Now
-                // Bạn có thể thêm:
-                // IntentType = isAskingAboutAnswer ? "Answer" : "Free"
             };
 
-            db.Responseais.Add(ResponseAiEntry);
-            db.SaveChanges();
+            db.Responseais.Add(responseAi);
+            await db.SaveChangesAsync();
 
-            return Ok(groqResponse);
+            return Ok(aiResponse);
         }
+
 
 
 
