@@ -227,7 +227,7 @@ namespace AI_trust.Controllers
             }
             else
             {
-                request.MessageHistories = request.MessageHistories.TakeLast(5).ToList();
+                request.MessageHistories = request.MessageHistories.TakeLast(3).ToList();
                 // ✅ User hỏi về đáp án → dùng CSDL
 
                 string historyBlock = "";
@@ -252,7 +252,7 @@ namespace AI_trust.Controllers
                 }
                 else
                 {
-                    if (request.questiontrytimes <=1)
+                    if (request.questiontrytimes <=2)
                     {
                         finalPrompt = $@"
                      {historyBlock}
@@ -264,7 +264,7 @@ namespace AI_trust.Controllers
                     IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
                  
                     
-                    Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn] ";
+                    Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: {question.Hallucination} [Đáp án của bạn] - [Giải thích của bạn] ";
                     }
                     else // >=2 
                     {
