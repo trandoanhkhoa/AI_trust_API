@@ -119,9 +119,9 @@ namespace AI_trust.Controllers
         [HttpPost("isaskingaboutanswerasync")]
         public async Task<bool> IsAskingAboutAnswerAsync([FromBody] UserMessage request)
         {
-            var apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+            var apiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
             if (string.IsNullOrWhiteSpace(apiKey))
-                throw new Exception("GROQ_API_KEY is missing");
+                throw new Exception("DEEPSEEK_API_KEY is missing");
 
             var question = db.Questions
                 .Where(x => x.Id == request.idquestioncurrent)
@@ -137,23 +137,26 @@ namespace AI_trust.Controllers
 
             var payload = new
             {
-                model = "llama-3.3-70b-versatile",
+                model = "deepseek-chat",
                 messages = new[]
-               {
-            new {
+                {
+            new
+            {
+                role = "system",
+                content = "Bạn là hệ thống phân loại câu hỏi. Chỉ trả lời YES hoặc NO."
+            },
+            new
+            {
                 role = "user",
                 content = $@"
-                    Bạn là hệ thống phân loại câu hỏi.
+Đầu vào sau có đang yêu cầu GIẢI THÍCH ĐÁP ÁN hoặc TRẢ LỜI hoặc LIÊN QUAN hoặc GẦN GIỐNG đến câu hỏi dưới đây không?
 
-                    Đầu vào sau có đang yêu cầu GIẢI THÍCH ĐÁP ÁN hoặc TRẢ LỜI hoặc LIÊN QUAN hoặc GẦN GIỐNG đến câu hỏi dưới đây không?
-                    Đầu vào: ""{request.text}""
-                    Chỉ trả lời duy nhất:
-                    YES hoặc NO
+Đầu vào: ""{request.text}""
 
-                    Câu hỏi: ""{question}""
-                    "
+Câu hỏi: ""{question}""
+"
             }
-            },
+        },
                 temperature = 0
             };
 
@@ -164,20 +167,20 @@ namespace AI_trust.Controllers
             );
 
             var response = await client.PostAsync(
-                "https://api.groq.com/openai/v1/chat/completions",
+                "https://api.deepseek.com/chat/completions",
                 content
             );
 
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                throw new Exception($"Groq API error: {error}");
+                throw new Exception($"DeepSeek API error: {error}");
             }
 
             var result = await response.Content.ReadAsStringAsync();
-            var groqResponse = JsonSerializer.Deserialize<GroqChatResponse>(result);
+            var deepSeekResponse = JsonSerializer.Deserialize<GroqChatResponse>(result);
 
-            var intent = groqResponse?.choices?
+            var intent = deepSeekResponse?.choices?
                 .FirstOrDefault()?
                 .message?
                 .content?
@@ -187,14 +190,16 @@ namespace AI_trust.Controllers
             return intent == "YES";
         }
 
-       
+
+
         [HttpPost("chat")]
         public async Task<IActionResult> Chat([FromBody] UserMessage request)
         {
             //string apiKey = _config["Groq:ApiKey"];
-            string apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+            string apiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+            
 
-            string endpoint = "https://api.groq.com/openai/v1/chat/completions";
+            string endpoint = "https://api.deepseek.com/chat/completions";
 
             var client = _httpClientFactory.CreateClient();
             client.DefaultRequestHeaders.Clear();
@@ -272,7 +277,7 @@ namespace AI_trust.Controllers
             // 🔥 BƯỚC 3: GỬI PROMPT ĐẾN GROQ
             var requestPayload = new
             {
-                model = "llama-3.3-70b-versatile",
+                model = "deepseek-chat",
                 messages = new[]
                 {
                     new { role = "user", content = finalPrompt }
