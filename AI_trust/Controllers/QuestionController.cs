@@ -36,6 +36,24 @@ namespace AI_trust.Controllers
 
             return Ok(lstquestion);
         }
+        [HttpGet("getanswersbyid")]
+        public async Task<IActionResult> GetQuestionAnswerid(int id)
+        {
+            var question = db.Questions
+                .Where(q => q.Id == id)
+                .Select(q => new
+                {
+                    q.Id,
+                    q.Hallucination,
+                                     
+                })
+                .FirstOrDefault();
+            if (question == null)
+            {
+                return NotFound();
+            }
+            return Ok(question);
+        }
 
     }
 }

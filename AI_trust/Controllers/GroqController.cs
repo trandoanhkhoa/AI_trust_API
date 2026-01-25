@@ -252,14 +252,15 @@ namespace AI_trust.Controllers
                     if (request.questiontrytimes <=2)
                     {
                         finalPrompt = $@"
-                     {historyBlock}
-                    Đây là câu hỏi:{request.text}
-                    Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi.
-                    - Có thể so sánh và giải thích với các đáp án khác nếu người dùng đề cập
-                    IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
+                        {historyBlock}
+                                                
+                        Đây là câu hỏi:{request.text}
+                        Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi.
+                        - Có thể so sánh và giải thích với các đáp án khác nếu người dùng đề cập
+                        IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
                     
-                    Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn cho từng đáp án]
-                    Đây là đáp án: {question.Hallucination}";
+                        Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn cho từng đáp án]
+                        Đây là đáp án: {question.Hallucination}";
                     }
                     else // >=2 
                     {
@@ -287,11 +288,7 @@ namespace AI_trust.Controllers
 
             var groqResponse = JsonSerializer.Deserialize<GroqChatResponse>(result);
             string aiContent = groqResponse.choices[0].message.content;
-            aiContent = aiContent
-            .Replace("\r\n", "\n")
-            .Replace("\n\n", "\n")
-            .Replace("\r", " ")
-            .Trim();
+       
             // 🔥 BƯỚC 4: LƯU DB
             var ResponseAiEntry = new Responseai
             {
