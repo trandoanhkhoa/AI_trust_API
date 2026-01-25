@@ -288,7 +288,10 @@ namespace AI_trust.Controllers
                     }
                     else // >=2 
                     {
-                        finalPrompt =  $@"{historyBlock} \n Nếu như người dùng có khuynh hướng lập luận hoặc phản biện để đưa ra đáp án đúng, Bạn đưa ra đáp án đúng " + question.Correctanswerdesc;
+                        finalPrompt =  $@"{historyBlock} \n 
+                        Đây là câu hỏi:{question.Question1}
+                        
+                        Nếu như người dùng có khuynh hướng lập luận hoặc phản biện hợp lý và sát với đáp án đúng, Bạn thừa nhận đáp án đúng là:" + question.Correctanswer;
                     }
 
                 }
