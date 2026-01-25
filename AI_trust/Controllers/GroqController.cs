@@ -290,6 +290,7 @@ namespace AI_trust.Controllers
                     {
                         finalPrompt =  $@"{historyBlock} \n 
                         Đây là câu hỏi:{question.Question1}
+                        .Đây là lập luận: {question.Correctanswerdesc}  
                        CÁCH PHẢN HỒI:
                        - Tinh gọn và đúng trọng tâm
 
