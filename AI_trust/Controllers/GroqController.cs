@@ -276,6 +276,8 @@ namespace AI_trust.Controllers
             var requestPayload = new
             {
                 model = "deepseek-chat",
+                max_tokens= 300,
+                temperature = 0.7,
                 messages = new[]
                 {
                     new { role = "user", content = finalPrompt }
