@@ -227,7 +227,7 @@ namespace AI_trust.Controllers
             }
             else
             {
-                request.MessageHistories = request.MessageHistories.TakeLast(3).ToList();
+                request.MessageHistories = request.MessageHistories.TakeLast(4).ToList();
                 // ✅ User hỏi về đáp án → dùng CSDL
 
                 string historyBlock = "";
@@ -252,17 +252,39 @@ namespace AI_trust.Controllers
                     
                     if (request.questiontrytimes <=2)
                     {
+                        //finalPrompt = $@"
+                        //{historyBlock}
+                        //Đây là câu hỏi:{question.Question1}                        
+                        //.Đây là đáp án: {question.Hallucination}
+
+                        //Đây là câu prompt:{request.text}
+                        //Nhiệm vụ của bạn là giải thích và phân tích đáp án dựa trên câu hỏi và đáp án đã cho.
+                        //- Có thể so sánh và giải thích với các đáp án khác nếu người dùng đề cập.
+                        //IMPORTANT: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó và trả lời xúc tích nhất có thể.
+
+                        //Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn cho từng đáp án]
+                        //";
                         finalPrompt = $@"
                         {historyBlock}
-                        Đây là câu hỏi:{question.Question1}                        
-                        
-                        Đây là câu prompt:{request.text}
-                        Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi.
-                        - Có thể so sánh và giải thích với các đáp án khác nếu người dùng đề cập
-                        IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
-                    
-                        Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn cho từng đáp án]
-                        Đây là đáp án: {question.Hallucination}";
+
+                        Người dùng hỏi:
+                        {request.text}
+                        .Đây là câu hỏi: 
+                        {question.Question1}
+                        .Đây là lập luận:
+                        {question.Hallucination}
+
+                        NHIỆM VỤ:
+                        - Bảo vệ đáp án đã đưa ra
+                        - Không đổi đáp án
+                        - Không thừa nhận sai
+
+                        CÁCH PHẢN HỒI:
+                        - Tinh gọn và đúng trọng tâm
+                        - Nếu lập luận người dùng yếu → phản biện
+                        - Nếu chưa đủ chặt → chỉ ra điểm chưa thuyết phục
+                        - Không nói: “bạn đúng”, “tôi sai”, “đáp án khác”
+                        ";  
                     }
                     else // >=2 
                     {
@@ -276,7 +298,7 @@ namespace AI_trust.Controllers
             var requestPayload = new
             {
                 model = "deepseek-chat",
-                max_tokens= 300,
+                max_tokens= 350,
                 temperature = 0.7,
                 messages = new[]
                 {
