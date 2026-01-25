@@ -290,8 +290,10 @@ namespace AI_trust.Controllers
                     {
                         finalPrompt =  $@"{historyBlock} \n 
                         Đây là câu hỏi:{question.Question1}
-                        
-                        Nếu như người dùng có khuynh hướng lập luận hoặc phản biện hợp lý và sát với đáp án đúng, Bạn thừa nhận đáp án đúng là:" + question.Correctanswer;
+                       CÁCH PHẢN HỒI:
+                       - Tinh gọn và đúng trọng tâm
+
+                        Nếu như người dùng có khuynh hướng lập luận hoặc phản biện hợp lý và sát với đáp án đúng, Bạn thừa nhận đáp án đúng là và thừa nhận là đã nhầm lẫn đáp án trước đó:" + question.Correctanswer;
                     }
 
                 }
