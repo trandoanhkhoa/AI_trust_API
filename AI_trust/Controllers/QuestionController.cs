@@ -36,7 +36,7 @@ namespace AI_trust.Controllers
 
             return Ok(lstquestion);
         }
-        [HttpGet("getanswersbyid")]
+        [HttpGet("getanswersbyid/{id}")]
         public async Task<IActionResult> GetQuestionAnswerid(int id)
         {
             var question = db.Questions
