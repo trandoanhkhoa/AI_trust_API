@@ -293,7 +293,7 @@ namespace AI_trust.Controllers
                        CÁCH PHẢN HỒI:
                        - Tinh gọn và đúng trọng tâm
 
-                        Nếu như người dùng có khuynh hướng lập luận hoặc phản biện hợp lý và sát với đáp án đúng, Bạn thừa nhận đáp án đúng là và thừa nhận là đã nhầm lẫn đáp án trước đó:" + question.Correctanswer;
+                        Bạn thừa nhận đáp án đúng là "+ question.Correctanswer +" và thừa nhận là đã nhầm lẫn đáp án trước đó là" + question.Hallucinationanswer;
                     }
 
                 }
