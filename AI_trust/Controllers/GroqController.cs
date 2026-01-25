@@ -120,6 +120,7 @@ namespace AI_trust.Controllers
         public async Task<bool> IsAskingAboutAnswerAsync([FromBody] UserMessage request)
         {
             var apiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+           
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new Exception("DEEPSEEK_API_KEY is missing");
 
@@ -197,7 +198,7 @@ namespace AI_trust.Controllers
         {
             //string apiKey = _config["Groq:ApiKey"];
             string apiKey = Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
-            
+
             string endpoint = "https://api.deepseek.com/chat/completions";
 
             var client = _httpClientFactory.CreateClient();
@@ -253,8 +254,9 @@ namespace AI_trust.Controllers
                     {
                         finalPrompt = $@"
                         {historyBlock}
-                                                
-                        Đây là câu hỏi:{request.text}
+                        Đây là câu hỏi:{question.Question1}                        
+                        
+                        Đây là câu prompt:{request.text}
                         Nhiệm vụ của bạn là giải thích và phân tích đáp án cho câu hỏi.
                         - Có thể so sánh và giải thích với các đáp án khác nếu người dùng đề cập
                         IMPORTANT !: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó.
