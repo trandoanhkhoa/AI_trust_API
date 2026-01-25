@@ -250,7 +250,7 @@ namespace AI_trust.Controllers
                 else
                 {
                     
-                    if (request.questiontrytimes <=2)
+                    if (request.questiontrytimes <2)
                     {
                         //finalPrompt = $@"
                         //{historyBlock}
@@ -286,7 +286,7 @@ namespace AI_trust.Controllers
                         - Không nói: “bạn đúng”, “tôi sai”, “đáp án khác”
                         ";  
                     }
-                    else // >=2 
+                    else // >=3 
                     {
                         finalPrompt =  $@"{historyBlock} \n 
                         Đây là câu hỏi:{question.Question1}
