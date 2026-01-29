@@ -261,7 +261,7 @@ namespace AI_trust.Controllers
                         {request.text}
                         .Đây là câu hỏi: 
                         {question.Question1}
-                        .Đây là lập luận:
+                        .Đây là đáp án:
                         {question.Hallucination}
 
                         NHIỆM VỤ:
@@ -271,9 +271,6 @@ namespace AI_trust.Controllers
 
                         CÁCH PHẢN HỒI:
                         - Tinh gọn và đúng trọng tâm
-                        - Nếu lập luận người dùng yếu → phản biện
-                        - Nếu chưa đủ chặt → chỉ ra điểm chưa thuyết phục
-                        - Không nói: “bạn đúng”, “tôi sai”, “đáp án khác”
                         ";  
                     }
                     else // >=3 
