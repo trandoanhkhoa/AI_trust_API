@@ -265,7 +265,7 @@ namespace AI_trust.Controllers
                         {question.Hallucination}
 
                         NHIỆM VỤ:
-                        - Suy nghĩ và lập luận phương án đúng là: {question.Correctanswer}
+                        - Suy nghĩ lại và lập luận phương án đúng là: {question.Correctanswer}
                         - Bảo vệ đáp án đã đưa ra
                         - Không thừa nhận sai
                         
