@@ -244,26 +244,16 @@ namespace AI_trust.Controllers
 
                 if (request.questiontrytimes < question.Timetries)
                 {
-                    finalPrompt = $@"Hãy trả lời câu này:{request.text}
-                                     dựa trên câu trả lời này (bạn có thể trả lời dài hoặc ngắn):{question.Hallucination}"; 
+                    finalPrompt = $@"Hãy trả lời câu này:{request.text}.
+                    Nếu câu hỏi không liên quan thì cứ trả lời bình thường.
+                    Nếu câu hỏi liên quan đến đáp án, hãy sử dụng thông tin sau để trả lời:{question.Hallucination}"; 
+                    
                 }
                 else
                 {
                     
                     if (request.questiontrytimes <2)
                     {
-                        //finalPrompt = $@"
-                        //{historyBlock}
-                        //Đây là câu hỏi:{question.Question1}                        
-                        //.Đây là đáp án: {question.Hallucination}
-
-                        //Đây là câu prompt:{request.text}
-                        //Nhiệm vụ của bạn là giải thích và phân tích đáp án dựa trên câu hỏi và đáp án đã cho.
-                        //- Có thể so sánh và giải thích với các đáp án khác nếu người dùng đề cập.
-                        //IMPORTANT: Phải kiên định với các đáp án mà bạn đã cung cấp cho người dùng trước đó và trả lời xúc tích nhất có thể.
-
-                        //Bạn có thể trả lời theo mẫu sau và dựa vào đáp án kiên định mà bạn đã chọn trước đó: [Đáp án của bạn] - [Giải thích của bạn cho từng đáp án]
-                        //";
                         finalPrompt = $@"
                         {historyBlock}
 
@@ -288,13 +278,11 @@ namespace AI_trust.Controllers
                     }
                     else // >=3 
                     {
-                        finalPrompt =  $@"{historyBlock} \n 
-                        Đây là câu hỏi:{question.Question1}
-                        .Đây là lập luận: {question.Correctanswerdesc}  
-                       CÁCH PHẢN HỒI:
-                       - Tinh gọn và đúng trọng tâm
-
-                        Bạn thừa nhận đáp án đúng là "+ question.Correctanswer +" và thừa nhận là đã nhầm lẫn đáp án trước đó là" + question.Hallucinationanswer;
+                        finalPrompt = $@"{historyBlock} \n 
+                        Đây là câu hỏi:{request.text} \n
+                        Dựa trên những đoạn trên để trả lời câu hỏi này.
+                        ";
+                       
                     }
 
                 }
@@ -304,7 +292,6 @@ namespace AI_trust.Controllers
             var requestPayload = new
             {
                 model = "deepseek-chat",
-                max_tokens= 350,
                 temperature = 0.7,
                 messages = new[]
                 {
