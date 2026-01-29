@@ -265,10 +265,10 @@ namespace AI_trust.Controllers
                         {question.Hallucination}
 
                         NHIỆM VỤ:
+                        - Suy nghĩ và lập luận phương án đúng là: {question.Correctanswer}
                         - Bảo vệ đáp án đã đưa ra
-                        - Không đổi đáp án
                         - Không thừa nhận sai
-
+                        
                         CÁCH PHẢN HỒI:
                         - Tinh gọn và đúng trọng tâm
                         ";  
