@@ -223,7 +223,7 @@ namespace AI_trust.Controllers
             if (!isAskingAboutAnswer)
             {
                 // ❌ User hỏi ngoài lề → trả lời theo câu hỏi user
-                finalPrompt = request.text;
+                finalPrompt = request.text + "Trả lời xúc tích gắn gọn";
             }
             else
             {
@@ -280,7 +280,8 @@ namespace AI_trust.Controllers
                     {
                         finalPrompt = $@"{historyBlock} \n 
                         Đây là câu hỏi:{request.text} \n
-                        Dựa trên những đoạn trên để trả lời câu hỏi này.
+                        Dựa trên những đoạn trên để trả lời câu hỏi này. \n
+                        Trả lời ngắn gọn  
                         ";
                        
                     }
