@@ -757,7 +757,51 @@ namespace AI_trust.Controllers
 
             sheet4.Columns().AdjustToContents();
             sheet4.SheetView.FreezeRows(1);
+            /* =========================
+           * SHEET 5: Survey
+           * ========================= */
 
+            var surveyData = GetUserAnswerSurveyDetail(rpt);
+            var sheetSurvey = workbook.Worksheets.Add("Survey Answers");
+
+            string[] headersSurvey =
+            {
+    "User ID",
+    "Name",
+    "Survey ID",
+    "Survey Question",
+    "Answer",
+    "Time"
+};
+
+            // Header
+            for (int i = 0; i < headersSurvey.Length; i++)
+            {
+                sheetSurvey.Cell(1, i + 1).Value = headersSurvey[i];
+            }
+
+            var headerRangeSurvey = sheetSurvey.Range(1, 1, 1, headersSurvey.Length);
+            headerRangeSurvey.Style.Font.Bold = true;
+            headerRangeSurvey.Style.Fill.BackgroundColor = XLColor.LightCyan;
+            headerRangeSurvey.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+            // Data
+            int row = 2;
+            foreach (var item in surveyData)
+            {
+                sheetSurvey.Cell(row, 1).Value = item.UserID;
+                sheetSurvey.Cell(row, 2).Value = item.Name;
+                sheetSurvey.Cell(row, 3).Value = item.SurveyID;
+                sheetSurvey.Cell(row, 4).Value = item.SurveyQuestion;
+                sheetSurvey.Cell(row, 5).Value = item.Answer;
+
+               
+
+                row++;
+            }
+
+            sheetSurvey.Columns().AdjustToContents();
+            sheetSurvey.SheetView.FreezeRows(1);
             /* =========================
              * RETURN FILE
              * ========================= */
@@ -941,6 +985,38 @@ namespace AI_trust.Controllers
 
             return data.ToList();
         }
+        private List<dynamic> GetUserAnswerSurveyDetail(ReportrateDto rpt)
+        {
+            var userfilter = db.Users.AsQueryable();
+
+            if (rpt.typeoftest.HasValue && rpt.typeoftest != -1)
+            {
+                userfilter = userfilter.Where(u => u.Typeoftest == rpt.typeoftest.Value);
+            }
+
+            var userAnswerSurvey = db.Useranswersurveys.AsQueryable(); // <-- bảng Useranswersurvey
+
+            
+
+            var surveys = db.Surveys.AsQueryable();
+
+            var data =
+                from uas in userAnswerSurvey
+                join u in userfilter on uas.Userid equals u.Id
+                join s in surveys on uas.Surveyid equals s.Id
+                select new
+                {
+                    UserID = u.Id,
+                    Name = u.Name,
+                    SurveyID = s.Id,
+                    SurveyQuestion = HtmlHelper.StripHtml(s.Question), // nếu field là Survey.Question
+                    Answer = uas.Answer, // hoặc uas.Answer1 tuỳ DB bạn
+                    
+                };
+
+            return data.ToList<dynamic>();
+        }
+
 
 
     }
